@@ -23,40 +23,57 @@ const setRefreshTokenCookie = (res: Response, token: string) => {
 };
 
 router.post('/register', async (req, res) => {
-  const { error, value } = registerSchema.validate(req.body);
-  if (error) {
-    return res.status(400).json({ errors: error.details.map(d => d.message) });
+  const result = registerSchema.safeParse(req.body);
+
+  if(! result.success) {
+    return res.status(400).json({
+      errors: result.error.issues.map(e => e.message),
+    });
   }
 
-  const user = await registerUserService(value.email, value.password);
+  const { email, password } = result.data;
+
+  const user = await registerUserService(email, password);
   res.json({ id: user.id, email: user.email });
 });
 
 router.post('/signup', async (req, res) => {
-  const { error, value } = registerSchema.validate(req.body);
-  if (error) {
-    return res.status(400).json({ errors: error.details.map(d => d.message) });
+  const result = registerSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({
+      errors: result.error.issues.map(e => e.message),
+    });
   }
 
+  const { email, password } = result.data;
+
   const { accessToken, refreshToken } =
-    await signupUserService(value.email, value.password);
+    await signupUserService(email, password);
 
   setRefreshTokenCookie(res, refreshToken);
   res.status(201).json({ accessToken });
 });
 
+
 router.post('/login', async (req, res) => {
-  const { error, value } = loginSchema.validate(req.body);
-  if (error) {
-    return res.status(400).json({ errors: error.details.map(d => d.message) });
+  const result = loginSchema.safeParse(req.body);
+
+  if (!result.success) {
+    return res.status(400).json({
+      errors: result.error.issues.map(e => e.message),
+    });
   }
 
+  const { email, password } = result.data;
+
   const { accessToken, refreshToken } =
-    await loginUserService(value.email, value.password);
+    await loginUserService(email, password);
 
   setRefreshTokenCookie(res, refreshToken);
   res.json({ accessToken });
 });
+
 
 router.post('/refresh', async (req, res) => {
   if (!req.cookies?.jwt) return res.sendStatus(401);

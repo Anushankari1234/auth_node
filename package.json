@@ -1,0 +1,45 @@
+{
+  "name": "typeorm-express-auth",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/server.ts",
+    "start": "ts-node src/server.ts",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:generate": "npm run typeorm -- migration:generate src/migrations/InitSchema -d src/data-source.ts",
+    "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts",
+    "migration:revert": "npm run typeorm -- migration:revert -d src/data-source.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "joi": "^18.0.2",
+    "jsonwebtoken": "^9.0.3",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "pg": "^8.17.2",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.28"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/express-session": "^1.18.2",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^25.1.0",
+    "@types/passport": "^1.0.17",
+    "@types/passport-google-oauth20": "^2.0.17",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}

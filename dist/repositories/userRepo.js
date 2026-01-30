@@ -1,0 +1,18 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getAllUsers = exports.deleteUserRepo = exports.saveUser = exports.createUser = exports.findUserById = exports.findUserByEmail = exports.userRepo = void 0;
+const data_source_1 = require("../data-source");
+const User_1 = require("../models/User");
+exports.userRepo = data_source_1.AppDataSource.getRepository(User_1.User);
+const findUserByEmail = (email) => exports.userRepo.findOneBy({ email });
+exports.findUserByEmail = findUserByEmail;
+const findUserById = (id) => exports.userRepo.findOneBy({ id });
+exports.findUserById = findUserById;
+const createUser = (user) => exports.userRepo.create(user);
+exports.createUser = createUser;
+const saveUser = (user) => exports.userRepo.save(user);
+exports.saveUser = saveUser;
+const deleteUserRepo = (user) => exports.userRepo.remove(user);
+exports.deleteUserRepo = deleteUserRepo;
+const getAllUsers = () => exports.userRepo.find({ select: ['id', 'email', 'isAdmin', 'createdAt'] });
+exports.getAllUsers = getAllUsers;

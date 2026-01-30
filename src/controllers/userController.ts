@@ -1,109 +1,82 @@
 import { Request, Response, Router } from 'express';
-import { AuthRequest } from '../middleware/auth';
+import { AuthRequest, authenticateToken } from '../middleware/auth';
 import {
-    registerUserService,
-    signupUserService,
-    loginUserService,
-    refreshTokenService,
-    getUsersService,
-    updateUserService,
-    deleteUserService
+  registerUserService,
+  signupUserService,
+  loginUserService,
+  refreshTokenService,
+  getUsersService,
+  updateUserService,
+  deleteUserService
 } from '../services/userService';
+import { registerSchema, loginSchema } from '../validation/validateUser';
 
 const router = Router();
 
-const getIdFromParams = (param: string | string[]): number => {
-    const idStr = Array.isArray(param) ? param[0] : param;
-    const id = parseInt(idStr);
-    if (isNaN(id)) throw new Error('Invalid user ID');
-    return id;
+const setRefreshTokenCookie = (res: Response, token: string) => {
+  res.cookie('jwt', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
 };
 
-router.post('/register', async (req: Request, res: Response) => {
-    try {
-        const { email, password } = req.body;
-        const user = await registerUserService(email, password);
-        res.json({ message: 'User registered successfully', user: { id: user.id, email: user.email } });
-    } catch (err: any) {
-        res.status(400).json({ message: err.message });
-    }
+router.post('/register', async (req, res) => {
+  const { error, value } = registerSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ errors: error.details.map(d => d.message) });
+  }
+
+  const user = await registerUserService(value.email, value.password);
+  res.json({ id: user.id, email: user.email });
 });
 
-router.post('/signup', async (req: Request, res: Response) => {
-    try {
-        const { email, password } = req.body;
-        const { accessToken, refreshToken } = await signupUserService(email, password);
+router.post('/signup', async (req, res) => {
+  const { error, value } = registerSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ errors: error.details.map(d => d.message) });
+  }
 
-        res.cookie('jwt', refreshToken, {
-            httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
+  const { accessToken, refreshToken } =
+    await signupUserService(value.email, value.password);
 
-        res.status(201).json({ message: 'Signup successful', accessToken });
-    } catch (err: any) {
-        res.status(400).json({ message: err.message });
-    }
+  setRefreshTokenCookie(res, refreshToken);
+  res.status(201).json({ accessToken });
 });
 
-router.post('/login', async (req: Request, res: Response) => {
-    try {
-        const { email, password } = req.body;
-        const { accessToken, refreshToken } = await loginUserService(email, password);
+router.post('/login', async (req, res) => {
+  const { error, value } = loginSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ errors: error.details.map(d => d.message) });
+  }
 
-        res.cookie('jwt', refreshToken, {
-            httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
+  const { accessToken, refreshToken } =
+    await loginUserService(value.email, value.password);
 
-        res.json({ accessToken });
-    } catch (err: any) {
-        res.status(400).json({ message: err.message });
-    }
+  setRefreshTokenCookie(res, refreshToken);
+  res.json({ accessToken });
 });
 
-router.post('/refresh', async (req: Request, res: Response) => {
-    try {
-        const cookies = req.cookies;
-        if (!cookies?.jwt) return res.status(401).json({ message: 'Unauthorized' });
-
-        const accessToken = refreshTokenService(cookies.jwt);
-        res.json({ accessToken });
-    } catch (err: any) {
-        res.status(403).json({ message: 'Forbidden' });
-    }
+router.post('/refresh', async (req, res) => {
+  if (!req.cookies?.jwt) return res.sendStatus(401);
+  const accessToken = refreshTokenService(req.cookies.jwt);
+  res.json({ accessToken });
 });
 
-router.get('/', async (req: AuthRequest, res: Response) => {
-    try {
-        const users = await getUsersService();
-        res.json(users);
-    } catch (err: any) {
-        res.status(500).json({ message: err.message });
-    }
+router.get('/', authenticateToken, async (req: AuthRequest, res) => {
+  res.json(await getUsersService());
 });
 
-router.put('/:id', async (req: AuthRequest, res: Response) => {
-    try {
-        const userId = getIdFromParams(req.params.id);
-        const updatedUser = await updateUserService(userId, req.body);
-        res.json({ message: 'User updated successfully', user: updatedUser });
-    } catch (err: any) {
-        res.status(400).json({ message: err.message });
-    }
+router.put('/:id', authenticateToken, async (req, res) => {
+  const id = Number(req.params.id);
+  res.json(await updateUserService(id, req.body));
 });
 
-router.delete('/:id', async (req: AuthRequest, res: Response) => {
-    try {
-        const userId = getIdFromParams(req.params.id);
-        await deleteUserService(userId);
-        res.json({ message: 'User deleted successfully' });
-    } catch (err: any) {
-        res.status(400).json({ message: err.message });
-    }
+router.delete('/:id', authenticateToken, async (req, res) => {
+  const id = Number(req.params.id);
+  await deleteUserService(id);
+  res.sendStatus(204);
 });
 
 export default router;

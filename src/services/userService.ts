@@ -58,3 +58,8 @@ export const deleteUserService = async (userId: number) => {
 
     return deleteUserRepo(user);
 };
+
+export const logoutUserService = () => {
+  return true;
+};
+

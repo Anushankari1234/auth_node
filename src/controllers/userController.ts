@@ -96,4 +96,15 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   res.sendStatus(204);
 });
 
+router.post('/logout', authenticateToken, (req, res) => {
+  res.clearCookie('jwt', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  });
+
+  res.sendStatus(204);
+});
+
+
 export default router;

@@ -1,7 +1,7 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import dotenv from 'dotenv';
-import { Any } from 'typeorm';
+
 
 dotenv.config();
 
@@ -15,7 +15,7 @@ passport.use(
       callbackURL: 'http://localhost:8082/auth/google/callback',
     },
     (accessToken, refreshToken, profile, done) => {
-      // Here, integrate with your database
+
       const user = {
         id: profile.id,
         displayName: profile.displayName,

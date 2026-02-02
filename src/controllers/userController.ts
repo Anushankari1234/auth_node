@@ -7,7 +7,8 @@ import {
   refreshTokenService,
   getUsersService,
   updateUserService,
-  deleteUserService
+  deleteUserService,
+  getUserByIdService
 } from '../services/userService';
 import { registerSchema, loginSchema } from '../validation/validateUser';
 
@@ -104,6 +105,12 @@ router.post('/logout', authenticateToken, (req, res) => {
   });
 
   res.sendStatus(204);
+});
+
+router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
+  const id = Number(req.params.id);
+  const user = await getUserByIdService(id);
+  res.json(user);
 });
 
 

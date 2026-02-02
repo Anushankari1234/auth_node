@@ -4,6 +4,7 @@ import { findUserByEmail, findUserById, saveUser, createUser, deleteUserRepo, ge
 import { generateAccessToken, generateRefreshToken } from '../shared/utils/jwt';
 import { User } from '../models/User';
 
+
 export const registerUserService = async (email: string, password: string) => {
     const existingUser = await findUserByEmail(email);
     if (existingUser) throw new Error('User already exists');
@@ -63,3 +64,9 @@ export const logoutUserService = () => {
   return true;
 };
 
+
+export const getUserByIdService = async (userId: number) => {
+    const user = await findUserById(userId);
+    if (!user) throw new Error('User not found');
+    return { id: user.id, email: user.email, isAdmin: user.isAdmin };
+}

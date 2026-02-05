@@ -8,9 +8,12 @@ import {
   getUsersService,
   updateUserService,
   deleteUserService,
-  getUserByIdService
+  getUserByIdService,
+  getUserByName,
+  logoutUserService
 } from '../services/userService';
 import { registerSchema, loginSchema } from '../validation/validateUser';
+
 
 const router = Router();
 
@@ -97,7 +100,30 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   res.sendStatus(204);
 });
 
-router.post('/logout', authenticateToken, (req, res) => {
+
+
+router.get('/alphabetical/', authenticateToken, async( req: AuthRequest, res)=>{
+  res.json(await getUserByName())
+})
+
+
+router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
+  const id = Number(req.params.id);
+  const user = await getUserByIdService(id);
+  res.json(user);
+});
+
+router.post('/logout', authenticateToken, async (req: AuthRequest, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token || !req.userId) {
+    return res.sendStatus(400);
+  }
+
+  
+  await logoutUserService(req.userId, token);
+
   res.clearCookie('jwt', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -107,11 +133,7 @@ router.post('/logout', authenticateToken, (req, res) => {
   res.sendStatus(204);
 });
 
-router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
-  const id = Number(req.params.id);
-  const user = await getUserByIdService(id);
-  res.json(user);
-});
+
 
 
 export default router;

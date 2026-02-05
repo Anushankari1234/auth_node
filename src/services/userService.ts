@@ -1,9 +1,10 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { findUserByEmail, findUserById, saveUser, createUser, deleteUserRepo, getAllUsers } from '../repositories/userRepo';
+import { findUserByEmail, findUserById, saveUser, createUser, deleteUserRepo, getAllUsers, orderByName } from '../repositories/userRepo';
 import { generateAccessToken, generateRefreshToken } from '../shared/utils/jwt';
+import { storeAccessToken } from '../repositories/redisRepo';
 import { User } from '../models/User';
-
+import { blacklistToken } from '../repositories/redisRepo';
 
 export const registerUserService = async (email: string, password: string) => {
     const existingUser = await findUserByEmail(email);
@@ -19,8 +20,11 @@ export const signupUserService = async (email: string, password: string) => {
     const accessToken = generateAccessToken(user.id);
     const refreshToken = generateRefreshToken(user.id);
 
+    await storeAccessToken(user.id, accessToken);
+
     return { user, accessToken, refreshToken };
 };
+
 
 export const loginUserService = async (email: string, password: string) => {
     const user = await findUserByEmail(email);
@@ -32,8 +36,14 @@ export const loginUserService = async (email: string, password: string) => {
     const accessToken = generateAccessToken(user.id);
     const refreshToken = generateRefreshToken(user.id);
 
+    
+await storeAccessToken(user.id, accessToken);
+
+
+
     return { accessToken, refreshToken, user };
 };
+
 
 export const refreshTokenService = (refreshToken: string) => {
     const decoded: any = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!);
@@ -60,8 +70,9 @@ export const deleteUserService = async (userId: number) => {
     return deleteUserRepo(user);
 };
 
-export const logoutUserService = () => {
-  return true;
+export const logoutUserService = async (userId: number, accessToken: string) => {
+    await blacklistToken(accessToken);
+    return true;
 };
 
 
@@ -70,3 +81,5 @@ export const getUserByIdService = async (userId: number) => {
     if (!user) throw new Error('User not found');
     return { id: user.id, email: user.email, isAdmin: user.isAdmin };
 }
+
+export const getUserByName = async () => orderByName();

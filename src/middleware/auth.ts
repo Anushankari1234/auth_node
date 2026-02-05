@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { isTokenBlacklisted } from '../repositories/redisRepo';
 dotenv.config();
 
 export interface AuthRequest extends Request {
@@ -13,18 +14,26 @@ interface JwtPayload {
     exp?: number;
 }
 
-export const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+export const authenticateToken = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
-    if (!token) return res.sendStatus(401);
+  if (!token) return res.sendStatus(401);
 
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!, (err, payload) => {
-        if (err) return res.sendStatus(403);
+  if (await isTokenBlacklisted(token)) {
+    return res.status(401).json({ message: 'Token is blacklisted' });
+  }
 
-        const jwtPayload = payload as JwtPayload;
-        req.userId = jwtPayload.userId;
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!, (err, payload) => {
+    if (err) return res.sendStatus(403);
 
-        next();
-    });
+    const jwtPayload = payload as JwtPayload;
+    req.userId = jwtPayload.userId;
+
+    next();
+  });
 };

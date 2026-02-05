@@ -10,3 +10,4 @@ export const saveUser = (user: User) => userRepo.save(user);
 export const deleteUserRepo = (user: User) => userRepo.remove(user);
 export const getAllUsers = () => userRepo.find({ select: ['id', 'email', 'isAdmin', 'createdAt'] });
 export const getUserById = (id: number) => userRepo.createQueryBuilder('user').select(['user.id', 'user.email', 'user.isAdmin']).where('user.id = :id', { id }).getOne();
+export const orderByName = () => userRepo.createQueryBuilder('user').orderBy("user.email","ASC").getMany()

@@ -13,6 +13,7 @@ import {
   logoutUserService
 } from '../services/userService';
 import { registerSchema, loginSchema } from '../validation/validateUser';
+import { emailQueue } from "../queues/emailQueue"
 
 
 const router = Router();
@@ -38,7 +39,12 @@ router.post('/register', async (req, res) => {
   const { email, password } = result.data;
 
   const user = await registerUserService(email, password);
-  res.json({ id: user.id, email: user.email });
+  await emailQueue.add("send-welcome-email", {
+    email,
+  });
+
+
+  res.json({  message: "User registered. Email will be sent shortly.", id: user.id, email: user.email });
 });
 
 router.post('/signup', async (req, res) => {
@@ -55,8 +61,13 @@ router.post('/signup', async (req, res) => {
   const { accessToken, refreshToken } =
     await signupUserService(email, password);
 
+  await emailQueue.add("send-welcome-email", {
+    email,
+  });
+
+
   setRefreshTokenCookie(res, refreshToken);
-  res.status(201).json({ accessToken });
+  res.status(201).json({  message: "User registered. Email will be sent shortly.", accessToken });
 });
 
 

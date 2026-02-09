@@ -4,7 +4,7 @@ import session from 'express-session';
 import passport from './shared/utils/passport';
 import userController from './controllers/userController';
 import fileController from './controllers/fileController';
-
+import { sendTestEmail, sendViaSendGrid } from './controllers/emailController';
 import type { NextFunction, Request, Response } from 'express';
 import { authenticateToken } from './middleware/auth';
 
@@ -53,7 +53,8 @@ app.use('/api/users', userController);
 
 app.use('/api/files', authenticateToken, fileController);
 
-
+app.post("/send-email", sendTestEmail);
+app.post("/email/sendgrid", sendViaSendGrid);
 app.get('/', (req, res) => res.send('API is running'));
 
 export default app;

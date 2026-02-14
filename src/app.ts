@@ -3,7 +3,10 @@ import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import passport from './shared/utils/passport';
 import userController from './controllers/userController';
+import fileController from './controllers/fileController';
+
 import type { NextFunction, Request, Response } from 'express';
+import { authenticateToken } from './middleware/auth';
 
 const app = express();
 
@@ -47,6 +50,9 @@ app.get('/logout', (req, res) => {
 
 
 app.use('/api/users', userController);
+
+app.use('/api/files', authenticateToken, fileController);
+
 
 app.get('/', (req, res) => res.send('API is running'));
 
